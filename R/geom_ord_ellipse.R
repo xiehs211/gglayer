@@ -51,7 +51,15 @@ geom_ord_ellipse <- function(mapping = NULL, ellipse_pro = 0.97, fill = NA, ...)
 ##' @importFrom grDevices chull
 StatOrdEllipse <- ggproto("StatOrdEllipse", Stat,
                           compute_group = function(self, data, scales, params, ellipse_pro) {
-                              names(data)[1:2] <- c('one', 'two')
+                              # Fix: Replace hardcoded column indexing with precise column name targeting
+                              # This prevents errors when data contains additional columns like Groups
+                              if (!all(c("x", "y") %in% names(data))) {
+                                  stop("Required aesthetics: x and y")
+                              }
+                              # Rename coordinate columns while preserving other columns
+                              colnames(data)[colnames(data) == "x"] <- "one"
+                              colnames(data)[colnames(data) == "y"] <- "two"
+                              
                               theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
                               circle <- cbind(cos(theta), sin(theta))
                               ell <- ddply(data, .(group), function(x) {
